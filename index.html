@@ -1,123 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sustainability Tracker</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #e6f7ff;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2a9d8f, #264653);
+            color: #fff;
+            padding: 2rem 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        main {
+            padding: 2rem 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-container {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background-color: #2a9d8f;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 4px;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #21867a;
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .result-card {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-card h3 {
+            color: #264653;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #2a9d8f;
+            padding-bottom: 0.5rem;
+        }
+
+        .result-card p {
+            margin-bottom: 0.5rem;
+        }
+
+        .cost-breakdown {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #ccc;
+        }
+
+        .cost-breakdown h4 {
+            color: #2a9d8f;
+            margin-bottom: 0.5rem;
+        }
+
+        .eco-tip {
+            background: #e8f5e9;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            border-left: 4px solid #2a9d8f;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background: #264653;
+            color: white;
+            margin-top: 2rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: #666;
+        }
+    </style>
+</head>
 <body>
     <header>
-        <h1>Sustainability Tracker</h1>
-        <p>Track your carbon footprint and optimize your energy use</p>
+        <h1>🌿 Sustainability Tracker</h1>
+        <p>Monitor your environmental impact and make informed decisions</p>
     </header>
+
     <main>
-        <h2>Enter Your Information</h2>
         <div class="form-container">
             <form id="trackerForm">
-                <!-- Transportation Mode -->
-                <input type="text" id="transportation" class="input-field"
-                    placeholder="Enter transportation mode (e.g., Car)" required>
-
-                <!-- Energy Consumption -->
-                <input type="number" id="energyConsumption" class="input-field"
+                <input type="text" id="transportation" class="input-field" 
+                    placeholder="Enter transportation mode (e.g., Car, Bus, Bike)" required>
+                
+                <input type="number" id="energyConsumption" class="input-field" 
                     placeholder="Enter energy consumption in kWh" required>
-
-                <!-- Destination Location -->
-                <input type="text" id="destination" class="input-field" placeholder="Enter destination (e.g., Office)"
-                    required>
-
-                <!-- Weather Location -->
-                <input type="text" id="weatherLocation" class="input-field" placeholder="Enter city for weather"
-                    required>
-
-                <!-- Submit Button -->
-                <button type="submit" class="btn">Track Sustainability</button>
+                
+                <input type="text" id="destination" class="input-field" 
+                    placeholder="Enter destination (e.g., Office, Store)" required>
+                
+                <input type="text" id="weatherLocation" class="input-field" 
+                    placeholder="Enter city for weather" required>
+                
+                <button type="submit" class="btn">Calculate Impact</button>
             </form>
         </div>
 
-        <div id="results" class="results-container">
-            <!-- Results will be dynamically inserted here -->
-        </div>
+        <div id="results"></div>
     </main>
+
     <footer>
-        <p>&copy; 2025 Sustainability Tracker. Built for Hackathon.</p>
+        <p>&copy; 2025 Sustainability Tracker. All rights reserved.</p>
     </footer>
 
     <script>
-        // API Keys
-        const googleMapsApiKey = 'AIzaSyDH3EKfKCv5kblJAKi86Ex9pOX_vajV-oc'; // Google Maps API Key
-        const carbonInterfaceApiKey = 'EB5OVMHQCaRuDobUgy2unw'; // Carbon Interface API Key
-        const weatherApiKey = '3cf1875151774804a40142844250401'; // WeatherAPI Key
+        function generateDummyData(formData) {
+            // Random number generator helper
+            const random = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+            
+            // INR conversion and rate constants
+            const KWH_RATE_INR = 8; // Base rate per kWh in INR
+            const PEAK_HOUR_RATE = 10; // Peak hour rate in INR
+            const NON_PEAK_RATE = 6; // Non-peak hour rate in INR
+            
+            // Weather conditions
+            const weatherConditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Light Rain', 'Clear'];
+            const weatherIcons = ['☀️', '⛅', '☁️', '🌧️', '🌤️'];
+            const randomWeatherIndex = random(0, weatherConditions.length - 1);
 
-        document.getElementById('trackerForm').addEventListener('submit', async function (e) {
+            // Calculate energy costs
+            const consumption = parseFloat(formData.energyConsumption);
+            const peakHourUsage = consumption * 0.4; // Assume 40% usage in peak hours
+            const nonPeakUsage = consumption * 0.6; // Assume 60% usage in non-peak hours
+            
+            const peakHourCost = peakHourUsage * PEAK_HOUR_RATE;
+            const nonPeakCost = nonPeakUsage * NON_PEAK_RATE;
+            const totalCost = peakHourCost + nonPeakCost;
+
+            // Transportation impact calculation
+            const transportationImpact = {
+                'car': random(150, 300),
+                'bus': random(50, 100),
+                'bike': random(0, 5),
+                'walk': 0
+            };
+
+            const transport = formData.transportation.toLowerCase();
+            const carbonImpact = transportationImpact[transport] || random(100, 200);
+
+            return {
+                transportation: {
+                    mode: formData.transportation,
+                    distance: random(5, 50),
+                    carbonImpact: carbonImpact,
+                    duration: random(15, 120)
+                },
+                energy: {
+                    consumption: consumption,
+                    carbonFootprint: (consumption * 0.85).toFixed(2),
+                    peakHourUsage: peakHourUsage.toFixed(2),
+                    nonPeakUsage: nonPeakUsage.toFixed(2),
+                    peakHourCost: peakHourCost.toFixed(2),
+                    nonPeakCost: nonPeakCost.toFixed(2),
+                    totalCost: totalCost.toFixed(2),
+                    renewablePercentage: random(10, 40)
+                },
+                weather: {
+                    location: formData.weatherLocation,
+                    temperature: random(15, 30),
+                    condition: weatherConditions[randomWeatherIndex],
+                    icon: weatherIcons[randomWeatherIndex],
+                    humidity: random(30, 80)
+                },
+                tips: [
+                    "Use appliances during non-peak hours to save on electricity costs",
+                    "Install smart meters to monitor real-time electricity consumption",
+                    "Use natural light during daytime to reduce electricity usage",
+                    "Consider installing solar panels for long-term cost savings",
+                    "Upgrade to energy-efficient appliances to reduce consumption"
+                ][random(0, 4)]
+            };
+        }
+
+        document.getElementById('trackerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Get user input values
-            const transportation = document.getElementById('transportation').value.trim();
-            const energyConsumption = document.getElementById('energyConsumption').value.trim();
-            const destination = document.getElementById('destination').value.trim();
-            const weatherLocation = document.getElementById('weatherLocation').value.trim();
+            // Show loading state
+            document.getElementById('results').innerHTML = '<div class="loading">Analyzing your environmental impact...</div>';
 
-            // Display a loading message
-            document.getElementById('results').innerHTML = '<p>Loading data...</p>';
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-            try {
-                // Fetch transportation data from Google Maps API
-                const transportationResponse = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${transportation}&destination=${destination}&mode=driving&key=AIzaSyDH3EKfKCv5kblJAKi86Ex9pOX_vajV-oc`);
-                const transportationData = await transportationResponse.json();
-                console.log('Transportation Data:', transportationData); // Log transportation data
+            // Get form data
+            const formData = {
+                transportation: document.getElementById('transportation').value,
+                energyConsumption: document.getElementById('energyConsumption').value,
+                destination: document.getElementById('destination').value,
+                weatherLocation: document.getElementById('weatherLocation').value
+            };
 
-                // Fetch energy data from Carbon Interface API
-                const energyResponse = await fetch(`https://api.carboninterface.com/v1/estimate`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${carbonInterfaceApiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        "type": "electricity",
-                        "consumption": energyConsumption
-                    })
-                });
-                const energyData = await energyResponse.json();
-                console.log('Energy Data:', energyData); // Log energy data
+            // Generate dummy data
+            const data = generateDummyData(formData);
 
-                // Fetch weather data from WeatherAPI
-                const weatherResponse = await fetch(`https://api.weatherapi.com/v1/current.json?key=${weatherApiKey}&q=${weatherLocation}`);
-                const weatherData = await weatherResponse.json();
-                console.log('Weather Data:', weatherData); // Log weather data
+            // Format currency
+            const formatINR = (amount) => {
+                return new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    maximumFractionDigits: 0
+                }).format(amount);
+            };
 
-                // Create result HTML to display data
-                const resultHTML = `
+            // Create results HTML
+            const resultHTML = `
+                <div class="results-container">
                     <div class="result-card">
-                        <h3>Transportation Impact</h3>
-                        <p>Mode: ${transportation}</p>
-                        <p>Emissions: ${transportationData.routes[0].legs[0].distance.text} km</p>
+                        <h3>🚗 Transportation Impact</h3>
+                        <p><strong>Mode:</strong> ${data.transportation.mode}</p>
+                        <p><strong>Distance:</strong> ${data.transportation.distance} km</p>
+                        <p><strong>Duration:</strong> ${data.transportation.duration} minutes</p>
+                        <p><strong>Carbon Impact:</strong> ${data.transportation.carbonImpact} g CO2</p>
                     </div>
+                    
                     <div class="result-card">
-                        <h3>Energy Consumption</h3>
-                        <p>Consumption: ${energyConsumption} kWh</p>
-                        <p>Impact: ${energyData.data.attributes.carbon_footprint} kg of CO2</p>
+                        <h3>⚡ Energy Analysis</h3>
+                        <p><strong>Consumption:</strong> ${data.energy.consumption} kWh</p>
+                        <p><strong>Carbon Footprint:</strong> ${data.energy.carbonFootprint} kg CO2</p>
+                        <p><strong>Renewable Mix:</strong> ${data.energy.renewablePercentage}%</p>
+                        
+                        <div class="cost-breakdown">
+                            <h4>Cost Breakdown</h4>
+                            <p><strong>Peak Hours (${data.energy.peakHourUsage} kWh):</strong> ${formatINR(data.energy.peakHourCost)}</p>
+                            <p><strong>Non-Peak (${data.energy.nonPeakUsage} kWh):</strong> ${formatINR(data.energy.nonPeakCost)}</p>
+                            <p><strong>Total Cost:</strong> ${formatINR(data.energy.totalCost)}</p>
+                        </div>
                     </div>
+                    
                     <div class="result-card">
-                        <h3>Weather Information</h3>
-                        <p>Location: ${weatherLocation}</p>
-                        <p>Condition: ${weatherData.current.condition.text}</p>
-                        <p>Temperature: ${weatherData.current.temp_c}°C</p>
+                        <h3>🌤️ Weather Conditions</h3>
+                        <p><strong>Location:</strong> ${data.weather.location}</p>
+                        <p><strong>Temperature:</strong> ${data.weather.temperature}°C</p>
+                        <p><strong>Condition:</strong> ${data.weather.icon} ${data.weather.condition}</p>
+                        <p><strong>Humidity:</strong> ${data.weather.humidity}%</p>
                     </div>
-                `;
+                </div>
+                
+                <div class="eco-tip">
+                    <strong>💡 Cost-Saving Tip:</strong> ${data.tips}
+                </div>
+            `;
 
-                // Display results on the page
-                document.getElementById('results').innerHTML = resultHTML;
-            } catch (error) {
-                document.getElementById('results').innerHTML = '<p>Error fetching data. Please try again.</p>';
-                console.error('Error fetching data:', error);
-            }
+            // Display results
+            document.getElementById('results').innerHTML = resultHTML;
         });
     </script>
 </body>
-
 </html>
